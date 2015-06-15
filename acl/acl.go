@@ -52,6 +52,9 @@ type ACL interface {
 	// ServiceRead checks for permission to read a given service
 	ServiceRead(string) bool
 
+	// Exec determines if the command is allowed to be executed.
+	Exec(string) bool
+
 	// ACLList checks for permission to list all the ACLs
 	ACLList() bool
 
@@ -84,6 +87,10 @@ func (s *StaticACL) ServiceRead(string) bool {
 }
 
 func (s *StaticACL) ServiceWrite(string) bool {
+	return s.defaultAllow
+}
+
+func (s *StaticACL) Exec(string) bool {
 	return s.defaultAllow
 }
 
@@ -136,6 +143,9 @@ type PolicyACL struct {
 
 	// serviceRules contains the service policies
 	serviceRules *radix.Tree
+
+	// execRules contains the exec policies
+	execRules *radix.Tree
 }
 
 // New is used to construct a policy based ACL from a set of policies
@@ -145,6 +155,7 @@ func New(parent ACL, policy *Policy) (*PolicyACL, error) {
 		parent:       parent,
 		keyRules:     radix.New(),
 		serviceRules: radix.New(),
+		execRules:    radix.New(),
 	}
 
 	// Load the key policy
@@ -156,6 +167,12 @@ func New(parent ACL, policy *Policy) (*PolicyACL, error) {
 	for _, sp := range policy.Services {
 		p.serviceRules.Insert(sp.Name, sp.Policy)
 	}
+
+	// Load the exec policy
+	for _, ep := range policy.Exec {
+		p.execRules.Insert(ep.Command, ep.Policy)
+	}
+
 	return p, nil
 }
 
@@ -264,6 +281,19 @@ func (p *PolicyACL) ServiceWrite(name string) bool {
 
 	// No matching rule, use the parent.
 	return p.parent.ServiceWrite(name)
+}
+
+// Exec determines if running a remote command is allowed
+func (p *PolicyACL) Exec(command string) bool {
+	rule, ok := p.execRules.Get(command)
+	if !ok {
+		// Try the "catch-all" policy if none was found
+		rule, ok = p.execRules.Get("")
+		if !ok {
+			return false
+		}
+	}
+	return rule == ExecPolicyAllow
 }
 
 // ACLList checks if listing of ACLs is allowed

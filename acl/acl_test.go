@@ -47,6 +47,9 @@ func TestStaticACL(t *testing.T) {
 	if !all.ServiceWrite("foobar") {
 		t.Fatalf("should allow")
 	}
+	if !all.Exec("foobar") {
+		t.Fatalf("should allow")
+	}
 	if all.ACLList() {
 		t.Fatalf("should not allow")
 	}
@@ -66,6 +69,12 @@ func TestStaticACL(t *testing.T) {
 	if none.ServiceWrite("foobar") {
 		t.Fatalf("should not allow")
 	}
+	if none.Exec("foobar") {
+		t.Fatalf("should not allow")
+	}
+	if none.Exec("") {
+		t.Fatalf("should not allow")
+	}
 	if none.ACLList() {
 		t.Fatalf("should not noneow")
 	}
@@ -83,6 +92,9 @@ func TestStaticACL(t *testing.T) {
 		t.Fatalf("should allow")
 	}
 	if !manage.ServiceWrite("foobar") {
+		t.Fatalf("should allow")
+	}
+	if !manage.Exec("foobar") {
 		t.Fatalf("should allow")
 	}
 	if !manage.ACLList() {
@@ -130,6 +142,16 @@ func TestPolicyACL(t *testing.T) {
 			&ServicePolicy{
 				Name:   "barfoo",
 				Policy: ServicePolicyWrite,
+			},
+		},
+		Exec: []*ExecPolicy{
+			&ExecPolicy{
+				Command: "",
+				Policy:  ExecPolicyAllow,
+			},
+			&ExecPolicy{
+				Command: "uptime",
+				Policy:  ExecPolicyDeny,
 			},
 		},
 	}
@@ -186,6 +208,22 @@ func TestPolicyACL(t *testing.T) {
 		}
 		if c.write != acl.ServiceWrite(c.inp) {
 			t.Fatalf("Write fail: %#v", c)
+		}
+	}
+
+	type execcase struct {
+		inp   string
+		allow bool
+	}
+	ecases := []execcase{
+		{"ls", true},
+		{"pwd", true},
+		{"ps", true},
+		{"uptime", false},
+	}
+	for _, c := range ecases {
+		if c.allow != acl.Exec(c.inp) {
+			t.Fatalf("Exec fail: %#v", c)
 		}
 	}
 }

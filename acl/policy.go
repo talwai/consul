@@ -13,6 +13,8 @@ const (
 	ServicePolicyDeny  = "deny"
 	ServicePolicyRead  = "read"
 	ServicePolicyWrite = "write"
+	ExecPolicyAllow    = "allow"
+	ExecPolicyDeny     = "deny"
 )
 
 // Policy is used to represent the policy specified by
@@ -21,6 +23,7 @@ type Policy struct {
 	ID       string           `hcl:"-"`
 	Keys     []*KeyPolicy     `hcl:"key,expand"`
 	Services []*ServicePolicy `hcl:"service,expand"`
+	Exec     []*ExecPolicy    `hcl:"exec,expand"`
 }
 
 // KeyPolicy represents a policy for a key
@@ -41,6 +44,16 @@ type ServicePolicy struct {
 
 func (k *ServicePolicy) GoString() string {
 	return fmt.Sprintf("%#v", *k)
+}
+
+// ExecPolicy represents a remote exec policy.
+type ExecPolicy struct {
+	Command string `hcl:",key"`
+	Policy  string
+}
+
+func (e *ExecPolicy) GoString() string {
+	return fmt.Sprintf("%#v", *e)
 }
 
 // Parse is used to parse the specified ACL rules into an
@@ -77,6 +90,16 @@ func Parse(rules string) (*Policy, error) {
 		case ServicePolicyWrite:
 		default:
 			return nil, fmt.Errorf("Invalid service policy: %#v", sp)
+		}
+	}
+
+	// Validate the exec policies
+	for _, ep := range p.Exec {
+		switch ep.Policy {
+		case ExecPolicyAllow:
+		case ExecPolicyDeny:
+		default:
+			return nil, fmt.Errorf("Invalid exec policy: %#v", ep)
 		}
 	}
 

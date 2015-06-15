@@ -25,6 +25,12 @@ service "" {
 service "foo" {
 	policy = "read"
 }
+exec "" {
+	policy = "allow"
+}
+exec "uptime" {
+	policy = "deny"
+}
 	`
 	exp := &Policy{
 		Keys: []*KeyPolicy{
@@ -53,6 +59,16 @@ service "foo" {
 			&ServicePolicy{
 				Name:   "foo",
 				Policy: ServicePolicyRead,
+			},
+		},
+		Exec: []*ExecPolicy{
+			&ExecPolicy{
+				Command: "",
+				Policy:  ExecPolicyAllow,
+			},
+			&ExecPolicy{
+				Command: "uptime",
+				Policy:  ExecPolicyDeny,
 			},
 		},
 	}
@@ -90,6 +106,14 @@ func TestParse_JSON(t *testing.T) {
 		"foo": {
 			"policy": "read"
 		}
+	},
+	"exec": {
+		"": {
+			"policy": "allow"
+		},
+		"uptime": {
+			"policy": "deny"
+		}
 	}
 }`
 	exp := &Policy{
@@ -119,6 +143,16 @@ func TestParse_JSON(t *testing.T) {
 			&ServicePolicy{
 				Name:   "foo",
 				Policy: ServicePolicyRead,
+			},
+		},
+		Exec: []*ExecPolicy{
+			&ExecPolicy{
+				Command: "",
+				Policy:  ExecPolicyAllow,
+			},
+			&ExecPolicy{
+				Command: "uptime",
+				Policy:  ExecPolicyDeny,
 			},
 		},
 	}
