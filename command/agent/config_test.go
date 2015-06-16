@@ -629,6 +629,32 @@ func TestDecodeConfig(t *testing.T) {
 		t.Fatalf("bad: %#v", config)
 	}
 
+	// dogstatsd
+	input = `{"dogstatsd_addr": "127.0.0.1:7254", "dogstatsd_tags":["tag_1:val_1", "tag_2:val_2"],"dogstatsd_enable_host_tag":true}`
+	config, err = DecodeConfig(bytes.NewReader([]byte(input)))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if config.DogStatsdAddr != "127.0.0.1:7254" {
+		t.Fatalf("bad: %#v", config)
+	}
+
+	if len(config.DogStatsdTags) != 2 {
+		t.Fatalf("bad: %#v", config)
+	}
+
+	if config.DogStatsdTags[0] != "tag_1:val_1" {
+		t.Fatalf("bad: %#v", config)
+	}
+
+	if config.DogStatsdTags[1] != "tag_2:val_2" {
+		t.Fatalf("bad: %#v", config)
+	}
+
+	if !config.DogStatsdEnableHostTag {
+		t.Fatalf("bad: %#v", config)
+	}
+
 	// Statsite prefix
 	input = `{"statsite_prefix": "my_prefix"}`
 	config, err = DecodeConfig(bytes.NewReader([]byte(input)))
@@ -1197,6 +1223,9 @@ func TestMergeConfig(t *testing.T) {
 		StatsiteAddr:              "127.0.0.1:7250",
 		StatsitePrefix:            "stats_prefix",
 		StatsdAddr:                "127.0.0.1:7251",
+		DogStatsdAddr:             "127.0.0.1:7254",
+		DogStatsdTags:             []string{"tag_1:val_1", "tag_2:val_2"},
+		DogStatsdEnableHostTag:    true,
 		DisableUpdateCheck:        true,
 		DisableAnonymousSignature: true,
 		HTTPAPIResponseHeaders: map[string]string{

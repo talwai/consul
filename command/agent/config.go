@@ -184,6 +184,18 @@ type Config struct {
 	// metrics will be sent to that instance.
 	StatsdAddr string `mapstructure:"statsd_addr"`
 
+	// DogStatsdAddr is the address of a dogstatsd instance. If provided,
+	// metrics will be sent to that instance
+	DogStatsdAddr string `mapstructure:"dogstatsd_addr"`
+
+	// DogStatsdTags are the global tags that should be sent with each packet to dogstatsd
+	// It is a list of strings, where each string looks like "my_tag_name:my_tag_value"
+	DogStatsdTags []string `mapstructure:"dogstatsd_tags"`
+
+	// DogStatsdEnableHostTag determines whether dogstatsd packets should be automatically
+	// tagged with the hostname specified in the Metrics config
+	DogStatsdEnableHostTag bool `mapstructure:"dogstatsd_enable_host_tag"`
+
 	// Protocol is the Consul protocol version to use.
 	Protocol int `mapstructure:"protocol"`
 
@@ -888,6 +900,15 @@ func MergeConfig(a, b *Config) *Config {
 	}
 	if b.StatsdAddr != "" {
 		result.StatsdAddr = b.StatsdAddr
+	}
+	if b.DogStatsdAddr != "" {
+		result.DogStatsdAddr = b.DogStatsdAddr
+	}
+	if b.DogStatsdTags != nil {
+		result.DogStatsdTags = b.DogStatsdTags
+	}
+	if b.DogStatsdEnableHostTag == true {
+		result.DogStatsdEnableHostTag = b.DogStatsdEnableHostTag
 	}
 	if b.EnableDebug {
 		result.EnableDebug = true

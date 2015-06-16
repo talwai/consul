@@ -592,6 +592,27 @@ func (c *Command) Run(args []string) int {
 		fanout = append(fanout, sink)
 	}
 
+	// Configure the DogStatsd sink
+	if config.DogStatsdAddr != "" {
+		var tags []string
+		enableHostTag := false
+
+		if config.DogStatsdTags != nil {
+			tags = config.DogStatsdTags
+		}
+
+		if config.DogStatsdEnableHostTag {
+			enableHostTag = config.DogStatsdEnableHostTag
+		}
+
+		sink, err := metrics.NewDogStatsdSink(config.DogStatsdAddr, tags, enableHostTag)
+		if err != nil {
+			c.Ui.Error(fmt.Sprintf("Failed to start DogStatsd sink. Got: %s", err))
+			return 1
+		}
+		fanout = append(fanout, sink)
+	}
+
 	// Initialize the global sink
 	if len(fanout) > 0 {
 		fanout = append(fanout, inm)
