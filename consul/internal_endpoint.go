@@ -57,6 +57,27 @@ func (m *Internal) EventFire(args *structs.EventFireRequest,
 		return err
 	}
 
+	// Check ACLs
+	acl, err := m.srv.resolveToken(args.Token)
+	if err != nil {
+		return err
+	}
+
+	if args.Name == "_rexec" {
+		// TODO: Figure out a way to get the command in here to enable
+		// exact-match restrictions on commands. For now we just check
+		// the blanket policy for allowed/disallowed.
+		if acl != nil && !acl.Exec("") {
+			m.srv.logger.Printf("[WARN] consul: remote exec denied due to ACLs")
+			return permissionDeniedErr
+		}
+	} else {
+		if acl != nil && !acl.EventWrite(args.Name) {
+			m.srv.logger.Printf("[WARN] consul: user event %q blocked by ACLs", args.Name)
+			return permissionDeniedErr
+		}
+	}
+
 	// Set the query meta data
 	m.srv.setQueryMeta(&reply.QueryMeta)
 

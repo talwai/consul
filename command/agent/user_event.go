@@ -36,6 +36,9 @@ type UserEvent struct {
 	// must be provided with ServiceFilter
 	TagFilter string `codec:"tf,omitempty"`
 
+	// Token is used to pass an ACL token to authorize the event.
+	Token string `codec:"t,omitempty"`
+
 	// Version of the user event. Automatically generated.
 	Version int `codec:"v"`
 
@@ -85,27 +88,21 @@ func (a *Agent) UserEvent(dc string, params *UserEvent) error {
 		return fmt.Errorf("UserEvent encoding failed: %v", err)
 	}
 
-	// Check if this is the local DC, fire locally
-	if dc == "" || dc == a.config.Datacenter {
-		if a.server != nil {
-			return a.server.UserEvent(params.Name, payload)
-		} else {
-			return a.client.UserEvent(params.Name, payload)
-		}
-	} else {
-		// Send an RPC to remote datacenter to service this
-		args := structs.EventFireRequest{
-			Datacenter: dc,
-			Name:       params.Name,
-			Payload:    payload,
-		}
-
-		// Any server can process in the remote DC, since the
-		// gossip will take over anyways
-		args.AllowStale = true
-		var out structs.EventFireResponse
-		return a.RPC("Internal.EventFire", &args, &out)
+	// Send an RPC to service this
+	args := structs.EventFireRequest{
+		Datacenter: dc,
+		Name:       params.Name,
+		Payload:    payload,
 	}
+
+	// Pass along the ACL token, if any
+	args.Token = params.Token
+
+	// Any server can process in the remote DC, since the
+	// gossip will take over anyways
+	args.AllowStale = true
+	var out structs.EventFireResponse
+	return a.RPC("Internal.EventFire", &args, &out)
 }
 
 // handleEvents is used to process incoming user events
