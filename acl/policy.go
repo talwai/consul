@@ -13,6 +13,9 @@ const (
 	ServicePolicyDeny  = "deny"
 	ServicePolicyRead  = "read"
 	ServicePolicyWrite = "write"
+	EventPolicyRead    = "read"
+	EventPolicyWrite   = "write"
+	EventPolicyDeny    = "deny"
 	ExecPolicyAllow    = "allow"
 	ExecPolicyDeny     = "deny"
 )
@@ -23,6 +26,7 @@ type Policy struct {
 	ID       string           `hcl:"-"`
 	Keys     []*KeyPolicy     `hcl:"key,expand"`
 	Services []*ServicePolicy `hcl:"service,expand"`
+	Events   []*EventPolicy   `hcl:"event,expand"`
 	Exec     []*ExecPolicy    `hcl:"exec,expand"`
 }
 
@@ -44,6 +48,16 @@ type ServicePolicy struct {
 
 func (k *ServicePolicy) GoString() string {
 	return fmt.Sprintf("%#v", *k)
+}
+
+// EventPolicy represents a user event policy.
+type EventPolicy struct {
+	Event  string `hcl:",key"`
+	Policy string
+}
+
+func (e *EventPolicy) GoString() string {
+	return fmt.Sprintf("%#v", *e)
 }
 
 // ExecPolicy represents a remote exec policy.
@@ -90,6 +104,17 @@ func Parse(rules string) (*Policy, error) {
 		case ServicePolicyWrite:
 		default:
 			return nil, fmt.Errorf("Invalid service policy: %#v", sp)
+		}
+	}
+
+	// Validate the user event policies
+	for _, ep := range p.Events {
+		switch ep.Policy {
+		case EventPolicyRead:
+		case EventPolicyWrite:
+		case EventPolicyDeny:
+		default:
+			return nil, fmt.Errorf("Invalid event policy: %#v", ep)
 		}
 	}
 

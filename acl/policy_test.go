@@ -25,6 +25,15 @@ service "" {
 service "foo" {
 	policy = "read"
 }
+event "" {
+	policy = "read"
+}
+event "foo" {
+	policy = "write"
+}
+event "bar" {
+	policy = "deny"
+}
 exec "" {
 	policy = "allow"
 }
@@ -59,6 +68,20 @@ exec "uptime" {
 			&ServicePolicy{
 				Name:   "foo",
 				Policy: ServicePolicyRead,
+			},
+		},
+		Events: []*EventPolicy{
+			&EventPolicy{
+				Event:  "",
+				Policy: EventPolicyRead,
+			},
+			&EventPolicy{
+				Event:  "foo",
+				Policy: EventPolicyWrite,
+			},
+			&EventPolicy{
+				Event:  "bar",
+				Policy: EventPolicyDeny,
 			},
 		},
 		Exec: []*ExecPolicy{
@@ -107,6 +130,17 @@ func TestParse_JSON(t *testing.T) {
 			"policy": "read"
 		}
 	},
+	"event": {
+		"": {
+			"policy": "read"
+		},
+		"foo": {
+			"policy": "write"
+		}
+		"bar": {
+			"policy": "deny"
+		}
+	},
 	"exec": {
 		"": {
 			"policy": "allow"
@@ -145,14 +179,28 @@ func TestParse_JSON(t *testing.T) {
 				Policy: ServicePolicyRead,
 			},
 		},
+		Events: []*EventPolicy{
+			&EventPolicy{
+				Command: "",
+				Policy:  EventPolicyRead,
+			},
+			&EventPolicy{
+				Event:  "foo",
+				Policy: EventPolicyWrite,
+			},
+			&EventPolicy{
+				Event:  "bar",
+				Policy: EventPolicyDeny,
+			},
+		},
 		Exec: []*ExecPolicy{
 			&ExecPolicy{
 				Command: "",
-				Policy:  ExecPolicyAllow,
+				Policy:  EventPolicyAllow,
 			},
 			&ExecPolicy{
 				Command: "uptime",
-				Policy:  ExecPolicyDeny,
+				Policy:  EventPolicyDeny,
 			},
 		},
 	}

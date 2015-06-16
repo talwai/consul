@@ -147,11 +147,11 @@ func TestPolicyACL(t *testing.T) {
 		Exec: []*ExecPolicy{
 			&ExecPolicy{
 				Command: "",
-				Policy:  ExecPolicyAllow,
+				Policy:  EventPolicyAllow,
 			},
 			&ExecPolicy{
 				Command: "uptime",
-				Policy:  ExecPolicyDeny,
+				Policy:  EventPolicyDeny,
 			},
 		},
 	}
