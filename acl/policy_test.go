@@ -136,7 +136,7 @@ func TestParse_JSON(t *testing.T) {
 		},
 		"foo": {
 			"policy": "write"
-		}
+		},
 		"bar": {
 			"policy": "deny"
 		}
@@ -181,8 +181,8 @@ func TestParse_JSON(t *testing.T) {
 		},
 		Events: []*EventPolicy{
 			&EventPolicy{
-				Command: "",
-				Policy:  EventPolicyRead,
+				Event:  "",
+				Policy: EventPolicyRead,
 			},
 			&EventPolicy{
 				Event:  "foo",
@@ -196,11 +196,11 @@ func TestParse_JSON(t *testing.T) {
 		Exec: []*ExecPolicy{
 			&ExecPolicy{
 				Command: "",
-				Policy:  EventPolicyAllow,
+				Policy:  ExecPolicyAllow,
 			},
 			&ExecPolicy{
 				Command: "uptime",
-				Policy:  EventPolicyDeny,
+				Policy:  ExecPolicyDeny,
 			},
 		},
 	}
